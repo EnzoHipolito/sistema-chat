@@ -1,5 +1,7 @@
 // Conectar socket
-const socket = io("https://sesichat.onrender.com");
+// const socket = io("https://sesichat.onrender.com");
+
+const socket = io()
 
 // Variável para armazenar o username atual
 let username = null;
@@ -13,6 +15,9 @@ const authArea = document.getElementById("authArea"); // div login/registro
 const userArea = document.getElementById("userArea"); // div com saudação + logout
 const saudacao = document.getElementById("saudacao");
 const logoutBtn = document.getElementById("logoutBtn");
+const roomList = document.getElementById('roomList');
+// Adiciona evento no botão de criar chat
+
 
 // Inicialmente, input e botão estão desativados
 if (input) input.disabled = true;
@@ -39,6 +44,43 @@ socket.on('usernameConfirmed', (name) => {
     userArea.classList.remove("hidden");
     saudacao.textContent = `Olá, ${username}`;
   }
+});
+
+
+function atualizarChats() {
+  socket.emit('listarChats'); // Pede ao servidor para enviar a lista de chats
+}
+
+function criarNovoChat() {
+  const chatName = prompt("Digite o nome do novo chat:");
+  if (chatName) {
+    socket.emit('createRoom', chatName); // Cria a sala no servidor
+  }
+}
+
+function entrarNoChat(chatName) {
+  socket.emit('entrarChat', chatName);  // O usuário entra na sala selecionada
+  messages.innerHTML = ''; // Limpa as mensagens anteriores
+  socket.emit('mensagem', { user: 'Sistema', text: `Entrou na sala: ${chatName}` });
+}
+
+socket.on('listarChats', (chats) => {
+  const chatList = document.getElementById('chatList');
+  chatList.innerHTML = ''; // Limpa a lista de chats
+
+  // Adiciona cada sala à lista
+  chats.forEach(chat => {
+    const li = document.createElement('li');
+    const chatName = chat;
+    li.textContent = chatName;
+    li.addEventListener('click', () => entrarNoChat(chat)); // Entrar na sala ao clicar
+    chatList.appendChild(li);
+  });
+});
+
+document.getElementById('criarChatBtn').addEventListener('click', function(event) {
+  event.preventDefault(); // Previne a ação padrão (se houver)
+  criarNovoChat();  // Chama a função ao clicar no botão
 });
 
 // Função para enviar mensagem
